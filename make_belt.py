@@ -1,8 +1,15 @@
 import math
+import re
 import sys
 
+import click
 import cv2
 import numpy as np
+import pyperclip
+from blueprint import Blueprint
+from direction import Direction
+from entitycounter import EntityCounter
+from item_colors import colors
 
 try:
     from dither.dither import dither
@@ -10,119 +17,17 @@ except ImportError:
     print('Failed to import dither library. Processing may be slow.', file=sys.stderr)
     from pydither import dither
 
-from blueprint import Blueprint
-from direction import Direction
-from entitycounter import EntityCounter
-
-
-available = [
-    # comment out items you don't want to use
-    # BGR format
-    ([ 43.,  70.,  76.], 'firearm-magazine'),
-    ([ 43.,  43.,  73.], 'piercing-rounds-magazine'),
-    ([ 40., 113.,  31.], 'uranium-rounds-magazine'),
-    ([ 54., 173.,  59.], 'battery-equipment'),
-    ([183., 135.,  88.], 'slowdown-capsule'),
-    ([ 51.,  56.,  73.], 'cluster-grenade'),
-    ([115., 116., 117.], 'discharge-defense-equipment'),
-    ([130.,  89.,  89.], 'discharge-defense-remote'),
-    ([ 44.,  50.,  59.], 'gate'),
-    ([ 56., 150.,  83.], 'poison-capsule'),
-    ([ 59.,  63.,  62.], 'grenade'),
-    ([ 89., 107., 203.], 'belt-immunity-equipment'),
-    ([ 62.,  77.,  91.], 'land-mine'),
-    ([ 67.,  71.,  75.], 'pistol'),
-    ([147., 110., 127.], 'production-science-pack'),
-    ([154., 138.,  90.], 'chemical-science-pack'),
-    ([117., 112., 110.], 'military-science-pack'),
-    ([102., 129., 104.], 'logistic-science-pack'),
-    ([ 98.,  90., 136.], 'automation-science-pack'),
-    ([154., 151., 151.], 'space-science-pack'),
-    ([114., 135., 149.], 'utility-science-pack'),
-    ([ 39.,  62., 120.], 'shotgun-shell'),
-    ([ 68.,  77.,  89.], 'piercing-shotgun-shell'),
-    ([ 72.,  81., 104.], 'combat-shotgun'),
-    ([ 61.,  64.,  69.], 'submachine-gun'),
-    ([122., 102.,  99.], 'solar-panel-equipment'),
-    ([ 77.,  86.,  91.], 'stone-wall'),
-
-    ([103.,  98.,  92.], 'assembling-machine-2'),
-    ([ 89., 111., 112.], 'assembling-machine-3'),
-    ([ 53.,  83., 159.], 'advanced-circuit'),
-    ([ 64.,  71.,  81.], 'burner-inserter'),
-    ([ 98.,  81.,  56.], 'cliff-explosives'),
-    ([  0.,   0.,   0.], 'coal'),
-    ([113., 114., 115.], 'concrete'),
-    ([ 46.,  66., 113.], 'copper-ore'),
-    ([ 67.,  82., 141.], 'copper-plate'),
-    ([ 76.,  94., 133.], 'copper-cable'),
-    ([ 78.,  83.,  84.], 'crude-oil-barrel'),
-    ([ 54., 138., 109.], 'electronic-circuit'),
-    ([ 52., 129.,  70.], 'effectivity-module-3'),
-    ([ 50.,  59., 109.], 'explosives'),
-    ([107., 102., 104.], 'express-transport-belt'),
-    ([100., 103., 120.], 'fast-transport-belt'),
-    ([ 82.,  79.,  75.], 'fast-inserter'),
-    ([ 81.,  62.,  80.], 'filter-inserter'),
-    ([ 56., 127.,  66.], 'green-wire'),
-    ([ 68.,  91., 113.], 'heavy-oil-barrel'),
-    ([ 56.,  74., 143.], 'heat-pipe'),
-    ([ 58.,  83., 112.], 'inserter'),
-    ([ 86.,  74.,  56.], 'iron-ore'),
-    ([100.,  98.,  99.], 'iron-plate'),
-    ([ 87.,  95., 104.], 'iron-chest'),
-    ([113., 108., 106.], 'lab'),
-    ([ 56., 103., 121.], 'light-oil-barrel'),
-    ([100.,  72.,  90.], 'logistic-chest-active-provider'),
-    ([ 74., 112.,  74.], 'logistic-chest-buffer'),
-    ([ 63.,  73., 120.], 'logistic-chest-passive-provider'),
-    ([105.,  98.,  77.], 'logistic-chest-requester'),
-    ([ 59.,  95., 110.], 'logistic-chest-storage'),
-    ([ 35.,  84.,  85.], 'landfill'),
-    ([ 54.,  60., 105.], 'long-handed-inserter'),
-    ([ 69., 103.,  82.], 'lubricant-barrel'),
-    ([ 76.,  90.,  96.], 'pipe'),
-    ([150., 150., 153.], 'plastic-bar'),
-    ([102., 106., 107.], 'petroleum-gas-barrel'),
-    ([168., 100., 113.], 'processing-unit'),
-    ([ 59., 111., 157.], 'productivity-module'),
-    ([ 99.,  86.,  73.], 'rail-chain-signal'),
-    ([ 40.,  40., 150.], 'red-wire'),
-    ([ 92.,  91.,  83.], 'solar-panel'),
-    ([ 60.,  60.,  63.], 'solid-fuel'),
-    ([153., 130.,  59.], 'speed-module'),
-    ([122., 132., 132.], 'steel-plate'),
-    ([255., 255., 255.], 'small-lamp'),
-    ([ 53.,  91.,  92.], 'stack-inserter'),
-    ([117., 110., 115.], 'steel-chest'),
-    ([ 59., 128., 109.], 'sulfuric-acid-barrel'),
-    ([ 96., 100., 105.], 'stack-filter-inserter'),
-    ([ 78.,  87.,  94.], 'storage-tank'),
-    ([ 57.,  71.,  80.], 'stone'),
-    ([ 98., 102., 102.], 'stone-brick'),
-    ([ 74., 139., 153.], 'sulfur'),
-    ([ 97., 112., 120.], 'transport-belt'),
-    ([ 32., 116.,  74.], 'uranium-ore'),
-    ([ 43., 166.,  61.], 'uranium-235'),
-    ([ 41.,  76.,  41.], 'uranium-238'),
-    ([101., 103.,  96.], 'water-barrel'),
-    ([ 51.,  72., 114.], 'wood'),
-    ([ 56.,  92., 118.], 'wooden-chest'),
-]
-
-palette = [x[0] for x in available]
-items = [x[1] for x in available]
-
 
 def image_resize(image, width=None, height=None, horizontal=False, inter=cv2.INTER_AREA):
     (h, w) = image.shape[:2]
 
-    if width is None:
-        r = height / float(h)
-        wb, hb = (int(math.ceil(w * r)), height)
-    else:
-        r = width / float(w)
-        wb, hb = (width, int(math.ceil(h * r)))
+    ratio_horizontal = width / w if width else 1
+    ratio_vertical = height / h if height else 1
+
+    r = min(ratio_horizontal, ratio_vertical)
+
+    wb, hb = (int(math.ceil(w * r)),
+              int(math.ceil(h * r)))
 
     if horizontal:
         dim = wb * 4, hb * 2
@@ -143,17 +48,17 @@ def bit_vector_to_int(arr):
 
 def print_requirements(ids):
 
-    reqs = []
+    required = []
 
-    for i, a in enumerate(available):
+    for i, a in enumerate(colors):
         count = np.sum(ids == i)
-        name = a[1]
+        name = a
 
-        reqs.append((name, count))
+        required.append((name, count))
 
-    reqs = sorted(reqs, key=lambda x: x[1], reverse=True)
+    required = sorted(required, key=lambda x: x[1], reverse=True)
 
-    for i, (name, count) in enumerate(reqs):
+    for i, (name, count) in enumerate(required):
         if count > 0:
             print((str(i+1)+'. ').ljust(4) + name.ljust(31) + str(count).rjust(6))
 
@@ -164,7 +69,7 @@ def put_canvas(blueprint, counter, x, y, length):
         blueprint['blueprint']['entities'].append(belt)
 
 
-def put_spliter(blueprint, counter, x, y):
+def put_splitter(blueprint, counter, x, y):
     UNDER = 'express-underground-belt'
     BELT = 'express-transport-belt'
     SPLIT = 'express-splitter'
@@ -333,140 +238,192 @@ def put_decoder(blueprint, counter, x, y):
     return divider, bit_shifter
 
 
-def main():
-    if len(sys.argv) < 3:
-        print('Usage: python make_belt.py image_path height')
-        exit(1)
+def load_palette(path):
+    palette = []
+    names = []
 
-    image_path, belt_height = sys.argv[1], int(sys.argv[2])
+    with open(path, 'r') as file:
+        for item_name in file.readlines():
+            item_name = item_name.strip()
 
-    img = cv2.imread(image_path)
-    img = image_resize(img, height=belt_height)
+            if not re.match(r'^[a-z]', item_name):
+                continue
 
-    dithered, ids = dither(img, palette=palette, out='both', method='fs')
+            if item_name in colors:
+                names.append(item_name)
+                palette.append(colors[item_name])
+            else:
+                print('Unknown item name: %s' % item_name, file=sys.stderr)
 
-    cv2.imshow('image', dithered)
-    cv2.waitKey(500)
+    return palette, names
 
-    print_requirements(ids)
 
-    height, width = ids.shape
+def put_memory(blueprint, counter, x, item_number, divider, bit_shifter, id_list, names):
+    entity_y = item_number
 
-    blueprint = Blueprint.empty()
+    for item_number in range(0, len(id_list), 32):
 
-    counter = EntityCounter()
+        strip = id_list[item_number:(item_number + 32)]
+        strip_number = item_number // 32
 
-    for x in range(width//2):
-        column_left = ids[:, x*2]
-        column_right = ids[:, x*2+1]
+        filters = []
 
-        put_canvas(blueprint, counter, x, -1, belt_height)
-        put_spliter(blueprint, counter, x, 0)
-        divider, bit_shifter = \
-            put_decoder(blueprint, counter, x, 7)
+        for item_idx, item in enumerate(names):
+            item_bit_vector = [x == item_idx for x in strip]
 
-        entity_y = 31
+            integer = bit_vector_to_int(item_bit_vector)
 
-        for y in range(0, height, 16):
-            strip_left = column_left[y:y+16]
-            strip_right = column_right[y:y+16]
+            if integer == 0:
+                continue
 
-            strip_number = y//16
+            filters.append({
+                "count": integer,
+                "index": len(filters) % 18 + 1,
+                "signal": {"type": "item", "name": item},
+            })
 
-            encoded = [val for pair in zip(strip_right, strip_left) for val in pair]
+        decider_combinator = {
+            "connections": {
+                "1": {"red": [{
+                    "entity_id": divider["entity_number"],
+                    "circuit_id": 2}]},
+                "2": {"green": [{
+                    "entity_id": bit_shifter["entity_number"],
+                    "circuit_id": 1}]}
 
-            filters = []
+            } if strip_number == 0 else {
+                "1": {"red": [{
+                    "entity_id": decider_combinator["entity_number"],
+                    "circuit_id": 1}]},
+                "2": {"green": [{
+                    "entity_id": decider_combinator["entity_number"],
+                    "circuit_id": 2}]}
+            },
+            "control_behavior": {
+                "decider_conditions": {
+                    "first_signal": {"type": "virtual", "name": "signal-G"},
+                    "constant": strip_number,
+                    "comparator": "=",
+                    "output_signal": {"type": "virtual", "name": "signal-everything"},
+                    "copy_count_from_input": "true"
+                }
+            },
+            "direction": Direction.N,
+            "entity_number": counter.next(),
+            "name": "decider-combinator",
+            "position": {"x": x, "y": entity_y + 0.5}
+        }
 
-            for item_idx, item in enumerate(items):
-                item_bit_vector = [x == item_idx for x in encoded]
+        constant_combinator1 = {
+            "connections": {
+                "1": {
+                    "green": [{
+                        "entity_id": counter.last(),
+                        "circuit_id": 1}]}},
+            "control_behavior": {"filters": filters[:18]},
+            "entity_number": counter.next(),
+            "name": "constant-combinator",
+            "position": {"x": x, "y": entity_y + 2}
+        }
 
-                integer = bit_vector_to_int(item_bit_vector)
+        blueprint["blueprint"]["entities"].append(decider_combinator)
+        blueprint["blueprint"]["entities"].append(constant_combinator1)
 
-                if integer == 0:
-                    continue
-
-                filters.append({
-                    "count": integer,
-                    "index": len(filters) % 18 + 1,
-                    "signal": {"type": "item", "name": item},
-                })
-
-            decider_combinator = {
-                "connections": {
-                    "1": {"red": [{
-                        "entity_id": divider["entity_number"],
-                        "circuit_id": 2}]},
-                    "2": {"green": [{
-                        "entity_id": bit_shifter["entity_number"],
-                        "circuit_id": 1}]}
-
-                } if strip_number == 0 else {
-                    "1": {"red": [{
-                        "entity_id": decider_combinator["entity_number"],
-                        "circuit_id": 1}]},
-                    "2": {"green": [{
-                        "entity_id": decider_combinator["entity_number"],
-                        "circuit_id": 2}]}
-                },
-                "control_behavior": {
-                    "decider_conditions": {
-                        "first_signal": {"type": "virtual", "name": "signal-G"},
-                        "constant": strip_number,
-                        "comparator": "=",
-                        "output_signal": {"type": "virtual", "name": "signal-everything"},
-                        "copy_count_from_input": "true"
-                    }
-                },
-                "direction": Direction.N,
-                "entity_number": counter.next(),
-                "name": "decider-combinator",
-                "position": {"x": x, "y": entity_y + 0.5}
-            }
-
-            constant_combinator1 = {
+        if len(filters) > 18:
+            constant_combinator2 = {
                 "connections": {
                     "1": {
                         "green": [{
                             "entity_id": counter.last(),
-                            "circuit_id": 1}]}},
-                "control_behavior": {"filters": filters[:18]},
+                            "circuit_id": 1,
+                        }]
+                    }
+                },
+                "control_behavior": {"filters": filters[18:]},
                 "entity_number": counter.next(),
                 "name": "constant-combinator",
-                "position": {"x": x, "y": entity_y + 2}
+                "position": {"x": x, "y": entity_y + 3}
             }
 
-            blueprint["blueprint"]["entities"].append(decider_combinator)
-            blueprint["blueprint"]["entities"].append(constant_combinator1)
+            blueprint["blueprint"]["entities"].append(constant_combinator2)
 
-            if len(filters) > 18:
-                constant_combinator2 = {
-                    "connections": {
-                        "1": {
-                            "green": [{
-                                "entity_id": counter.last(),
-                                "circuit_id": 1,
-                            }]
-                        }
-                    },
-                    "control_behavior": {"filters": filters[18:]},
-                    "entity_number": counter.next(),
-                    "name": "constant-combinator",
-                    "position": {"x": x, "y": entity_y + 3}
-                }
+        if x % 7 == 0:
+            pole = {"entity_number": counter.next(),
+                    "name": "medium-electric-pole",
+                    "position": {"x": x, "y": entity_y + 3}}
 
-                blueprint["blueprint"]["entities"].append(constant_combinator2)
+            blueprint["blueprint"]["entities"].append(pole)
 
-            if x % 7 == 0:
-                pole = {"entity_number": counter.next(),
-                        "name": "medium-electric-pole",
-                        "position": {"x": x, "y": entity_y + 3}}
+        entity_y += 4
 
-                blueprint["blueprint"]["entities"].append(pole)
 
-            entity_y += 4
+def get_slices(id_matrix, direction):
+    h, w = id_matrix.shape
 
-    print()
-    print(Blueprint.export_blueprint(blueprint))
+    if direction == 's':
+        return [id_matrix[:, x] for x in range(w)]
+    elif direction == 'w':
+        return [reversed(id_matrix[y, :]) for y in range(h)]
+    elif direction == 'n':
+        return [reversed(id_matrix[:, x]) for x in reversed(range(w))]
+    elif direction == 'e':
+        return [id_matrix[y, :] for y in reversed(range(h))]
+
+
+@click.command()
+@click.argument('image_path')
+@click.option('-w', 'width',     default=None, type=click.INT, help='Maximum width in belts.')
+@click.option('-h', 'height',    default=None, type=click.INT, help='Maximum height in belts.')
+@click.option('-d', 'direction', default='w',  type=click.Choice(['n', 'w', 's', 'e']),
+              help='Direction of the printing part from the canvas.')
+@click.option('-i', 'itemfile',     default='items.txt', help='File with a list of items to use. If not specified it '
+                                                           'will load "items.txt"')
+@click.option('-o', 'output',    default=None, help='Output file. If not specified the blueprint will be copied'
+                                                    'into clipboard.')
+def main(image_path, width, height, direction, itemfile, output):
+
+    horizontal = direction == 'e' or direction == 'w'
+
+    img = cv2.imread(image_path)
+    img = image_resize(img, width=width, height=height, horizontal=horizontal)
+
+    palette, items = load_palette(itemfile)
+
+    dithered, id_matrix = dither(img, palette=palette, out='both', method='fs')
+
+    cv2.imshow('image', dithered)
+    cv2.waitKey(500)
+
+    print_requirements(id_matrix)
+
+    blueprint = Blueprint.empty(name=image_path)
+
+    counter = EntityCounter()
+
+    slices = get_slices(id_matrix, direction)
+
+    for c in range(len(slices)//2):
+
+        slice_first = slices[c*2]
+        slice_second = slices[c*2+1]
+        id_list = [val for pair in zip(slice_first, slice_second) for val in pair]
+
+        put_canvas(blueprint, counter, c, -1, len(id_list) // 8)
+        put_splitter(blueprint, counter, c, 0)
+        divider, bit_shifter = \
+            put_decoder(blueprint, counter, c, 7)
+        put_memory(blueprint, counter, c, 31, divider, bit_shifter, id_list, items)
+
+    string = Blueprint.export_blueprint(blueprint)
+
+    if output:
+        with open(output, 'w') as file:
+            file.write(string)
+    else:
+        pyperclip.copy(string)
+        print('Copied blueprint to clipboard')
+
+    click.pause(info='Press any key to continue ...', err=False)
 
 
 if __name__ == '__main__':

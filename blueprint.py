@@ -19,7 +19,7 @@ class Blueprint:
         ), 'utf-8')
 
     @staticmethod
-    def empty():
+    def empty(name='', icons=''):
         return {
             "blueprint": {
                 "entities": [],

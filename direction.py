@@ -11,3 +11,8 @@ class Direction:
     @staticmethod
     def opposite(direction):
         return (direction+4) % 8
+
+    @staticmethod
+    def fromstring(s):
+        s = s.upper()
+        return Direction.__dict__[s]
