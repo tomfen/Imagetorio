@@ -8,25 +8,37 @@
             font-family: sans-serif;
         }
 
-        .itemCheck {
+        .itemCheckboxGroup {
             width: 250px;
             display: inline-block;
+            padding: 0px 5px
         }
 
         .preview {
             border: 1px solid rgb(97, 97, 97);
         }
 
+        .colorBox {
+            width: 15px;
+            height: 15px;
+            float: left
+        }
+
+        .countBox {
+            float: right;
+            font-weight: bold;
+        }
+
         #blueprint {
             border: 2px solid rgb(235, 235, 235);
-            background: rgb(97, 97, 221);
+            background: rgb(95, 95, 146);
             color: white;
             min-width: 2cm;
             min-height: 1cm;
             max-width: 5cm;
             margin: 5px;
             padding: 2px;
-            overflow: auto;
+            overflow: hidden;
         }
     </style>
 
@@ -36,7 +48,35 @@
     <script type="text/javascript" src="dither.js"></script>
     <script type='text/javascript'>
 
-    var idx, printerSize;
+        var idx, printerSize;
+
+        function getSize(img) {
+            var wMax = document.getElementById("winput").value
+            var hMax = document.getElementById("hinput").value
+
+            hRatio = wMax / img.width;
+            vRatio = hMax / img.height;
+
+            var h, w;
+
+            if (vRatio < hRatio) {
+                w = Math.ceil(img.width * vRatio);
+                h = hMax;
+            }
+            else {
+                w = wMax;
+                h = Math.ceil(img.height * hRatio);
+            }
+
+            if (isVertical()) {
+                w *= 2
+                h *= 4
+            } else {
+                w *= 4
+                h *= 2
+            }
+            return [w, h]
+        }
 
         function loadImage() {
             var input, file, fr, img;
@@ -60,30 +100,7 @@
                 canvas.width = img.width;
                 canvas.height = img.height;
 
-                var wMax = document.getElementById("winput").value
-                var hMax = document.getElementById("hinput").value
-
-                hRatio = wMax / img.width;
-                vRatio = hMax / img.height;
-
-                var h, w;
-
-                if (vRatio < hRatio) {
-                    w = Math.ceil(img.width * vRatio);
-                    h = hMax;
-                }
-                else {
-                    w = wMax;
-                    h = Math.ceil(img.height * hRatio);
-                }
-
-                if (isVertical()) {
-                    w *= 2
-                    h *= 4
-                } else {
-                    w *= 4
-                    h *= 2
-                }
+                [w, h] = getSize(img)
 
                 var imgd = resize(img, w, h)
                 var pix = imgd.data;
@@ -101,6 +118,7 @@
                 var ctx = canvas.getContext("2d");
                 ctx.drawImage(img, 0, 0);
 
+                updateRequirements(idx)
             }
 
             function resize(img, width, height) {
@@ -117,7 +135,7 @@
         }
 
         function getBlueprint() {
-                document.getElementById("blueprint").innerHTML = makePrinter(idx, printerSize, direction(), getNames())
+            document.getElementById("blueprint").innerHTML = makePrinter(idx, printerSize, direction(), getNames())
         }
 
         function direction() {
@@ -130,17 +148,15 @@
         }
 
         function getPalette() {
-            var form = document.getElementById('available_items').children;
-
             var palette = [];
 
-            for (var i = 0; i < form.length; i++) {
-                var child = form[i].children[0];
+            for (var item in colors) {
+                if (colors.hasOwnProperty(item)) {
+                    var checkbox = document.getElementById(item + 'Checkbox')
 
-                if (child.type == 'checkbox' && child.checked) {
-                    var name = child.name;
-
-                    palette.push(colors[name])
+                    if (checkbox.checked) {
+                        palette.push(colors[item])
+                    }
                 }
             }
 
@@ -148,46 +164,88 @@
         }
 
         function getNames() {
-            var form = document.getElementById('available_items').children;
-
             var names = [];
 
-            for (var i = 0; i < form.length; i++) {
-                var child = form[i].children[0];
+            for (var item in colors) {
+                if (colors.hasOwnProperty(item)) {
+                    var checkbox = document.getElementById(item + 'Checkbox')
 
-                if (child.type == 'checkbox' && child.checked) {
-                    var name = child.name;
-
-                    names.push(name)
+                    if (checkbox.checked) {
+                        names.push(item)
+                    }
                 }
             }
 
             return names;
         }
 
+        Object.defineProperties(Array.prototype, {
+            count: {
+                value: function (query) {
+                    var count = 0;
+                    for (let i = 0; i < this.length; i++)
+                        if (this[i] == query)
+                            count++;
+                    return count;
+                }
+            }
+        });
+
+        function updateRequirements(idx) {
+            for (var name in colors) {
+                var out = document.getElementById(name + 'Count');
+                out.value = ''
+            }
+
+            var names = getNames()
+
+            for (var i = 0; i < names.length; i++) {
+                var name = names[i]
+                count = idx.count(i)
+                var out = document.getElementById(name + 'Count');
+                if (count > 0)
+                    out.value = count;
+            }
+        }
+
+        function readableName(name) {
+            var name = name
+                .replace('logistic-chest', 'logistic')
+                .replace('defense', '')
+                .replace(/-/g, ' ')
+
+            return name[0].toUpperCase() + name.substr(1)
+        }
+
         function init() {
-            var cbh = document.getElementById('available_items');
+            var cbh = document.getElementById('availableItems');
             for (var name in colors) {
 
                 var div = document.createElement('div');
-                div.className = 'itemCheck';
+                div.className = 'itemCheckboxGroup';
 
+                var colorBox = document.createElement('div')
+                colorBox.className = 'colorBox'
+                var [r, g, b] = colors[name]
+                colorBox.style.backgroundColor = 'rgb(' + r + ',' + g + ',' + b + ')'
+                div.appendChild(colorBox)
 
                 var cb = document.createElement('input');
                 cb.type = 'checkbox';
                 div.appendChild(cb);
-                cb.id = name;
+                cb.id = name + 'Checkbox';
                 cb.name = name;
                 cb.checked = true;
                 cb.onchange = loadImage;
 
                 var label = document.createElement('label')
                 label.for = name
-                label.textContent = name
+                label.textContent = readableName(name)
                 div.appendChild(label)
 
-
                 var count = document.createElement('output')
+                count.id = name + 'Count';
+                count.className = 'countBox'
                 div.appendChild(count)
 
                 cbh.appendChild(div)
@@ -226,7 +284,7 @@
     <input type="radio" name="direction" value="s" onchange='loadImage()'> South
     <br><br>
 
-    <form action='#' onsubmit="return false;" id='available_items'>
+    <form action='#' onsubmit="return false;" id='availableItems'>
     </form>
 
 </body>

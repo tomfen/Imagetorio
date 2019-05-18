@@ -13,7 +13,6 @@ function makePrinter(idx, width, direction, items) {
 
     var stripes = getStripes(idx, direction);
 
-
     counter = {
         i: -1,
         next: function () { return ++this.i },
@@ -107,7 +106,6 @@ var Direction = {
     S: 4,
     W: 6,
 }
-
 
 function put_canvas(blueprint, counter, x, y, length) {
     for (var i = 0; i < length; i++) {
