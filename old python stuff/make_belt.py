@@ -389,7 +389,7 @@ def main(image_path, width, height, direction, itemfile, output):
 
     palette, items = load_palette(itemfile)
 
-    dithered, id_matrix = dither(img, palette=palette, out='both', method='fs')
+    dithered, id_matrix = dither(img, palette=palette, out='both', method='fs', gamma_correction=2.2)
 
     cv2.imshow('image', dithered)
     cv2.waitKey(500)
@@ -404,8 +404,8 @@ def main(image_path, width, height, direction, itemfile, output):
 
     for c in range(len(slices)//2):
 
-        slice_first = slices[c*2]
-        slice_second = slices[c*2+1]
+        slice_first = slices[c*2+1]
+        slice_second = slices[c*2]
         id_list = [val for pair in zip(slice_first, slice_second) for val in pair]
 
         put_canvas(blueprint, counter, c, -1, len(id_list) // 8)

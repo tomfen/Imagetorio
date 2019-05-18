@@ -1,0 +1,232 @@
+<html>
+
+<head>
+    <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+    <title>Imagetorio</title>
+    <style type='text/css'>
+        body {
+            font-family: sans-serif;
+        }
+
+        .itemCheck {
+            width: 250px;
+            display: inline-block;
+        }
+
+        .preview {
+            border: 1px solid rgb(97, 97, 97);
+        }
+
+        #blueprint {
+            border: 2px solid rgb(235, 235, 235);
+            background: rgb(97, 97, 221);
+            color: white;
+            min-width: 2cm;
+            min-height: 1cm;
+            max-width: 5cm;
+            margin: 5px;
+            padding: 2px;
+            overflow: auto;
+        }
+    </style>
+
+    <script type="text/javascript" src="printer.js"></script>
+    <script type="text/javascript" src="colors.js"></script>
+    <script type="text/javascript" src="pako.js"></script>
+    <script type="text/javascript" src="dither.js"></script>
+    <script type='text/javascript'>
+
+    var idx, printerSize;
+
+        function loadImage() {
+            var input, file, fr, img;
+
+            input = document.getElementById('imgfile');
+
+            file = input.files[0];
+            fr = new FileReader();
+            fr.onload = createImage;
+            fr.readAsDataURL(file);
+
+            function createImage() {
+                img = new Image();
+                img.onload = imageLoaded;
+                img.src = fr.result;
+            }
+
+            function imageLoaded() {
+                var canvas = document.getElementById("canvas1")
+
+                canvas.width = img.width;
+                canvas.height = img.height;
+
+                var wMax = document.getElementById("winput").value
+                var hMax = document.getElementById("hinput").value
+
+                hRatio = wMax / img.width;
+                vRatio = hMax / img.height;
+
+                var h, w;
+
+                if (vRatio < hRatio) {
+                    w = Math.ceil(img.width * vRatio);
+                    h = hMax;
+                }
+                else {
+                    w = wMax;
+                    h = Math.ceil(img.height * hRatio);
+                }
+
+                if (isVertical()) {
+                    w *= 2
+                    h *= 4
+                } else {
+                    w *= 4
+                    h *= 2
+                }
+
+                var imgd = resize(img, w, h)
+                var pix = imgd.data;
+
+                idx = dither(pix, w, h, getPalette());
+                printerSize = w
+
+                var canvas2 = document.getElementById("canvas2");
+                var ctx2 = canvas2.getContext('2d');
+
+                canvas2.width = img.width;
+                canvas2.height = img.height;
+                ctx2.putImageData(imgd, 0, 0);
+
+                var ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0);
+
+            }
+
+            function resize(img, width, height) {
+                var canvas = document.createElement('canvas');
+                var ctx = canvas.getContext('2d');
+
+                canvas.height = height;
+                canvas.width = width;
+
+                ctx.drawImage(img, 0, 0, width, height);
+
+                return ctx.getImageData(0, 0, width, height);
+            }
+        }
+
+        function getBlueprint() {
+                document.getElementById("blueprint").innerHTML = makePrinter(idx, printerSize, direction(), getNames())
+        }
+
+        function direction() {
+            return document.querySelector('input[name="direction"]:checked').value;
+        }
+
+        function isVertical() {
+            var v = direction();
+            return v == 'n' || v == 's'
+        }
+
+        function getPalette() {
+            var form = document.getElementById('available_items').children;
+
+            var palette = [];
+
+            for (var i = 0; i < form.length; i++) {
+                var child = form[i].children[0];
+
+                if (child.type == 'checkbox' && child.checked) {
+                    var name = child.name;
+
+                    palette.push(colors[name])
+                }
+            }
+
+            return palette;
+        }
+
+        function getNames() {
+            var form = document.getElementById('available_items').children;
+
+            var names = [];
+
+            for (var i = 0; i < form.length; i++) {
+                var child = form[i].children[0];
+
+                if (child.type == 'checkbox' && child.checked) {
+                    var name = child.name;
+
+                    names.push(name)
+                }
+            }
+
+            return names;
+        }
+
+        function init() {
+            var cbh = document.getElementById('available_items');
+            for (var name in colors) {
+
+                var div = document.createElement('div');
+                div.className = 'itemCheck';
+
+
+                var cb = document.createElement('input');
+                cb.type = 'checkbox';
+                div.appendChild(cb);
+                cb.id = name;
+                cb.name = name;
+                cb.checked = true;
+                cb.onchange = loadImage;
+
+                var label = document.createElement('label')
+                label.for = name
+                label.textContent = name
+                div.appendChild(label)
+
+
+                var count = document.createElement('output')
+                div.appendChild(count)
+
+                cbh.appendChild(div)
+            }
+        }
+
+
+    </script>
+</head>
+
+<body onload="init()">
+    <h1>Imagetorio</h1>
+
+    <canvas id="canvas1" class="preview"></canvas>
+    <canvas id="canvas2" class="preview"></canvas>
+
+    <div id="blueprint"></div>
+    <button type="blueprintButton" onclick="getBlueprint()">Get blueprint</button>
+
+    <br><br>
+
+    <input type='file' id='imgfile' onchange='loadImage()' />
+    <br><br>
+
+    <label for="hinput">Max height</label>
+    <input type="number" id='hinput' min=1 value=25 onchange='loadImage()'>
+
+    <label for="winput">Max width</label>
+    <input type="number" id='winput' min=1 value=25 onchange='loadImage()'>
+    <br><br>
+
+    <label for="direction">Printer direction</label><br>
+    <input type="radio" name="direction" value="n" onchange='loadImage()'> North
+    <input type="radio" name="direction" value="e" onchange='loadImage()' checked=true> East
+    <input type="radio" name="direction" value="w" onchange='loadImage()'> West
+    <input type="radio" name="direction" value="s" onchange='loadImage()'> South
+    <br><br>
+
+    <form action='#' onsubmit="return false;" id='available_items'>
+    </form>
+
+</body>
