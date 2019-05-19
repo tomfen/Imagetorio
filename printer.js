@@ -15,11 +15,15 @@ function makePrinter(idx, width, direction, items) {
 
     var stripes = getStripes(idx, direction);
 
-    counter = {
+    var counter = {
         i: -1,
         next: function () { return ++this.i },
         last: function () { return this.i },
     }
+
+
+    var onSwitch = put_switch(blueprint, counter)
+    var multiplierHook = onSwitch
 
     for (var x = 0; x < stripes.length; x++) {
 
@@ -27,13 +31,118 @@ function makePrinter(idx, width, direction, items) {
 
         put_canvas(blueprint, counter, x, -1, Math.floor(stripe.length / 8))
         put_splitter(blueprint, counter, x, 0)
-        var [divider, bit_shifter] =
+        var [multiplier, divider, bit_shifter] =
             put_decoder(blueprint, counter, x, 7)
         put_memory(blueprint, counter, x, 31, divider, bit_shifter, stripe, items)
+
+        connect('red', multiplier, multiplierHook, 1, 1)
+        multiplierHook = multiplier
     }
 
+    rotateToTargetDirection(blueprint, direction)
 
     return exportBlueprint(blueprint)
+}
+
+function put_switch(blueprint, counter) {
+    var onSwitch = {
+        'entity_number': counter.next(),
+        'name': 'constant-combinator',
+        'position': { 'x': -1, 'y': 12 },
+        'direction': Direction.E,
+        "control_behavior": {
+            "filters": [
+                { "signal": { "type": "virtual", "name": "signal-S" }, "count": 0, "index": 1 },
+                { "signal": { "type": "virtual", "name": "signal-W" }, "count": 0, "index": 2 },
+                { "signal": { "type": "virtual", "name": "signal-I" }, "count": 0, "index": 3 },
+                { "signal": { "type": "virtual", "name": "signal-T" }, "count": 0, "index": 4 },
+                { "signal": { "type": "virtual", "name": "signal-C" }, "count": 0, "index": 5 },
+                { "signal": { "type": "virtual", "name": "signal-H" }, "count": 0, "index": 6 },
+                { "signal": { "type": "virtual", "name": "signal-O" }, "count": 5, "index": 7 },
+                { "signal": { "type": "virtual", "name": "signal-N" }, "count": 0, "index": 8 },
+                { "signal": { "type": "virtual", "name": "signal-red" }, "count": -1, "index": 17 },
+                { "signal": { "type": "virtual", "name": "signal-green" }, "count": 1, "index": 18 }
+            ],
+            "is_on": false
+        }
+    }
+
+    blueprint['blueprint']['entities'].push(onSwitch)
+
+    var lamp = {
+        "entity_number": counter.next(),
+        "name": "small-lamp",
+        "position": { "x": -1, "y": 13 },
+        "control_behavior": {
+            "circuit_condition": {
+                "first_signal": { "type": "virtual", "name": "signal-anything" },
+                "constant": 0,
+                "comparator": ">"
+            },
+            "use_colors": true
+        }
+    }
+
+    blueprint['blueprint']['entities'].push(lamp)
+
+    var redConstant = {
+        'entity_number': counter.next(),
+        'name': 'constant-combinator',
+        'position': { 'x': 1, 'y': 14 },
+        "control_behavior": {
+            "filters": [
+                { "signal": { "type": "virtual", "name": "signal-red" }, "count": 1, "index": 1 },
+            ],
+        }
+    }
+
+    blueprint['blueprint']['entities'].push(redConstant)
+
+    connect('red', redConstant, lamp)
+    connect('red', onSwitch, lamp)
+
+    return onSwitch
+}
+
+function rotateToTargetDirection(blueprint, direction) {
+    switch (direction) {
+        case 's':       /*do nothing*/       break;
+        case 'w': rotateRight(blueprint, 1); break;
+        case 'n': rotateRight(blueprint, 2); break;
+        case 'e': rotateRight(blueprint, 3); break;
+    }
+}
+
+function rotateRight(blueprint, rotations) {
+    rotations = mod(rotations, 4)
+
+    var entities = blueprint['blueprint']['entities']
+
+    if (rotations == 0) return;
+
+    var transformMatrix =
+        rotations == 1 ? [[0, -1], [1, 0]] :
+            rotations == 2 ? [[-1, 0], [0, -1]] :
+                [[0, 1], [-1, 0]]
+
+    entities.forEach(entity => {
+        var currentPos = entity.position
+        var newPos = {}
+        newPos.x = transformMatrix[0][0] * currentPos.x + transformMatrix[0][1] * currentPos.y
+        newPos.y = transformMatrix[1][0] * currentPos.x + transformMatrix[1][1] * currentPos.y
+        entity.position = newPos
+
+        if ('direction' in entity) {
+            entity.direction = mod(entity.direction + rotations * 2, 8)
+        }
+        else {
+            entity.direction = mod(Direction.N + rotations * 2, 8)
+        }
+    })
+}
+
+function mod(n, m) {
+    return ((n % m) + m) % m;
 }
 
 function exportBlueprint(obj) {
@@ -136,7 +245,7 @@ function put_splitter(blueprint, counter, x, y) {
     var entities
     if (x % 2 == 0) {
         entities = [
-            { 'entity_number': counter.next(), 'name': UNDR, 'position': { 'x': x, 'y': y }, 'type': 'output' },
+            { 'entity_number': counter.next(), 'name': UNDR, 'position': { 'x': x, 'y': y }, 'direction': Direction.N, 'type': 'output' },
             { 'entity_number': counter.next(), 'name': BELT, 'position': { 'x': x - 1, 'y': y + 4 }, 'direction': Direction.E },
             { 'entity_number': counter.next(), 'name': UNDR, 'position': { 'x': x, 'y': y + 3 }, 'type': 'input' },
             { 'entity_number': counter.next(), 'name': BELT, 'position': { 'x': x, 'y': y + 4 } },
@@ -195,7 +304,7 @@ function put_decoder(blueprint, counter, x, y) {
         'control_behavior': {
             'arithmetic_conditions': {
                 'first_signal': { 'type': 'virtual', 'name': 'signal-each' },
-                'second_constant': 5,
+                'second_signal': { 'type': 'virtual', 'name': 'signal-O' },
                 'operation': '*',
                 'output_signal': { 'type': 'virtual', 'name': 'signal-each' }
             }
@@ -233,6 +342,7 @@ function put_decoder(blueprint, counter, x, y) {
         'entity_number': counter.next(),
         'name': 'arithmetic-combinator',
         'position': { 'x': x, 'y': y + 19.5 },
+        'direction': Direction.N,
         'control_behavior': {
             'arithmetic_conditions': {
                 'first_signal': { 'type': 'virtual', 'name': 'signal-each' },
@@ -247,6 +357,7 @@ function put_decoder(blueprint, counter, x, y) {
         'entity_number': counter.next(),
         'name': 'arithmetic-combinator',
         'position': { 'x': x, 'y': y + 17.5 },
+        'direction': Direction.N,
         'control_behavior': {
             'arithmetic_conditions': {
                 'first_signal': { 'type': 'virtual', 'name': 'signal-each' },
@@ -325,7 +436,7 @@ function put_decoder(blueprint, counter, x, y) {
         blueprint["blueprint"]["entities"].push(roboport)
     }
 
-    return [divider, bit_shifter]
+    return [multiplier, divider, bit_shifter]
 }
 
 function bit_vector_to_int(arr) {

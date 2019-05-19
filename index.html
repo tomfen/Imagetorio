@@ -67,24 +67,24 @@
         }
 
         function clipSize(w, h, wMax, hMax) {
-                if (w<wMax && h<hMax){
-                    return [w, h]
-                }
-
-                hRatio = wMax / w;
-                vRatio = hMax / h;
-
-                if (vRatio < hRatio) {
-                    w = Math.ceil(w * vRatio);
-                    h = hMax;
-                }
-                else {
-                    w = wMax;
-                    h = Math.ceil(h * hRatio);
-                }
-
+            if (w < wMax && h < hMax) {
                 return [w, h]
             }
+
+            hRatio = wMax / w;
+            vRatio = hMax / h;
+
+            if (vRatio < hRatio) {
+                w = Math.ceil(w * vRatio);
+                h = hMax;
+            }
+            else {
+                w = wMax;
+                h = Math.ceil(h * hRatio);
+            }
+
+            return [w, h]
+        }
 
 
         function loadImage() {
@@ -120,7 +120,7 @@
                 img.src = tempCanvas.toDataURL();
             }
 
-            
+
             function imageLoaded() {
                 var canvas = document.getElementById("canvas1")
                 var canvas2 = document.getElementById("canvas2");
@@ -250,6 +250,21 @@
             return name[0].toUpperCase() + name.substr(1)
         }
 
+        function checkAll() {
+            var checkboxes = document.getElementsByClassName("itemCheckbox");
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].checked = true
+            }
+            loadImage()
+        }
+
+        function uncheckAll() {
+            var checkboxes = document.getElementsByClassName("itemCheckbox");
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].checked = false
+            }
+        }
+
         function init() {
             var cbh = document.getElementById('availableItems');
             for (var name in colors) {
@@ -265,6 +280,7 @@
 
                 var cb = document.createElement('input');
                 cb.type = 'checkbox';
+                cb.className = 'itemCheckbox'
                 div.appendChild(cb);
                 cb.id = name + 'Checkbox';
                 cb.name = name;
@@ -315,6 +331,10 @@
     <input type="radio" name="direction" value="e" onchange='loadImage()' checked=true> East
     <input type="radio" name="direction" value="w" onchange='loadImage()'> West
     <input type="radio" name="direction" value="s" onchange='loadImage()'> South
+    <br><br>
+
+    <button onclick="checkAll()">Check all</button>
+    <button onclick="uncheckAll()">Uncheck all</button>
     <br><br>
 
     <form action='#' onsubmit="return false;" id='availableItems'>
