@@ -240,6 +240,9 @@
 
         function readableName(name) {
             var name = name
+                .replace('underground', 'under.')
+                .replace('science-pack', 'science')
+                .replace('cannon-shell', 'shell')
                 .replace('logistic-chest', 'logistic')
                 .replace('defense', '')
                 .replace(/-/g, ' ')

@@ -11,6 +11,8 @@ function makePrinter(idx, width, direction, items) {
 
     idx = reshape(idx, width);
 
+    console.log('idx shape: ' + idx.length + 'x' + idx[0].length);
+
     var stripes = getStripes(idx, direction);
 
     counter = {
@@ -19,8 +21,7 @@ function makePrinter(idx, width, direction, items) {
         last: function () { return this.i },
     }
 
-    var w = Math.floor(stripes.length/2)
-    for (var x = 0; x < w; x++) {
+    for (var x = 0; x < stripes.length; x++) {
 
         stripe = stripes[x]
 
@@ -50,10 +51,16 @@ function getStripes(idx, direction) {
 
     switch (direction) {
         case 'n':
-            var reversed = getStripes(idx, 's').reverse()
-            reversed.forEach(stripe => {
-                stripes.push(stripe.reverse())
-            });
+            for (var x = width - 2; x >= 0; x -= 2) {
+                var stripe = []
+
+                for (var y = height - 1; y >= 0; y--) {
+                    stripe.push(idx[y][x])
+                    stripe.push(idx[y][x + 1])
+                }
+
+                stripes.push(stripe)
+            }
             break;
 
         case 'w':
@@ -83,10 +90,16 @@ function getStripes(idx, direction) {
             break;
 
         case 'e':
-            var reversed = getStripes(idx, 'w').reverse()
-            reversed.forEach(stripe => {
-                stripes.push(stripe.reverse())
-            });
+            for (var y = height - 2; y >= 0; y -= 2) {
+                var stripe = []
+
+                for (var x = 0; x < width; x++) {
+                    stripe.push(idx[y][x])
+                    stripe.push(idx[y + 1][x])
+                }
+
+                stripes.push(stripe)
+            }
             break;
     }
 
