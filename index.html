@@ -31,7 +31,8 @@
 
         #blueprint {
             border: 2px solid rgb(235, 235, 235);
-            background: rgb(95, 95, 146);
+            background-image: url("b.svg");
+            background-color: rgb(95, 95, 146);
             color: white;
             min-width: 2cm;
             min-height: 1cm;
@@ -47,7 +48,7 @@
     <script type="text/javascript" src="dither.js"></script>
     <script type='text/javascript'>
 
-        var idx, printerSize;
+        var idx, printerSize, img;
 
         function getSize(img) {
             var wMax = document.getElementById("winput").value
@@ -87,7 +88,7 @@
 
 
         function loadImage() {
-            var input, file, fr, img;
+            var input, file, fr;
 
             input = document.getElementById('imgfile');
 
@@ -101,66 +102,95 @@
                 img.onload = imageLoaded;
                 img.src = fr.result;
             }
+        }
 
-            function drawDithered(imagedata, ctx, width, height) {
-                var tempCanvas = document.createElement("canvas");
-                var tempCtx = tempCanvas.getContext("2d");
+        function drawDithered(imagedata, ctx, width, height) {
+            var tempCanvas = document.createElement("canvas");
+            var tempCtx = tempCanvas.getContext("2d");
 
-                tempCanvas.width = imagedata.width;
-                tempCanvas.height = imagedata.height;
+            tempCanvas.width = imagedata.width;
+            tempCanvas.height = imagedata.height;
 
-                tempCtx.putImageData(imagedata, 0, 0);
+            tempCtx.putImageData(imagedata, 0, 0);
 
-                var img = new Image();
-                img.onload = function () {
-                    ctx.imageSmoothingEnabled = false
-                    ctx.drawImage(img, 0, 0, width, height);
-                }
-                img.src = tempCanvas.toDataURL();
-            }
-
-
-            function imageLoaded() {
-                var canvas = document.getElementById("canvas1")
-                var canvas2 = document.getElementById("canvas2");
-
-                var [cnvW, cnvH] = clipSize(img.width, img.height, 500, 1000)
-
-                canvas.width = cnvW;
-                canvas.height = cnvH;
-                canvas2.width = cnvW;
-                canvas2.height = cnvH;
-
-
-                var ctx = canvas.getContext("2d");
-                var ctx2 = canvas2.getContext('2d');
-
-                [w, h] = getSize(img)
-
-                var imgd = resize(img, w, h)
-                var pix = imgd.data;
-
-                idx = dither(pix, w, h, getPalette());
-                printerSize = w
-
-                drawDithered(imgd, ctx2, cnvW, cnvH)
-
-                ctx.drawImage(img, 0, 0, cnvW, cnvH);
-
-                updateRequirements(idx)
-            }
-
-            function resize(img, width, height) {
-                var canvas = document.createElement('canvas');
-                var ctx = canvas.getContext('2d');
-
-                canvas.height = height;
-                canvas.width = width;
-
+            var img = new Image();
+            img.onload = function () {
+                ctx.imageSmoothingEnabled = false
                 ctx.drawImage(img, 0, 0, width, height);
-
-                return ctx.getImageData(0, 0, width, height);
             }
+            img.src = tempCanvas.toDataURL();
+        }
+
+        function refreshDithered() {
+            var canvas = document.getElementById("canvas1")
+            var canvas2 = document.getElementById("canvas2");
+
+            canvas2.width = canvas.width;
+            canvas2.height = canvas.height;
+
+            var ctx2 = canvas2.getContext('2d');
+
+            [w, h] = getSize(img)
+
+            var imgd = resize(img, w, h)
+            var pix = imgd.data;
+
+            idx = dither(pix, w, h, getPalette());
+            printerSize = w
+
+            drawDithered(imgd, ctx2, canvas.width, canvas.height)
+
+            updateRequirements(idx)
+        }
+
+
+        function imageLoaded() {
+            var canvas = document.getElementById("canvas1")
+
+            var [cnvW, cnvH] = clipSize(img.width, img.height, 500, 1000)
+
+            canvas.width = cnvW;
+            canvas.height = cnvH;
+
+
+            refreshPreview()
+        }
+
+        function refreshPreview() {
+            var canvas = document.getElementById("canvas1")
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            var contrastSlider = document.getElementById("contrastSlider")
+            var brightnessSlider = document.getElementById("brightnessSlider")
+
+            var contrast = parseFloat(contrastSlider.value)
+            var brightness = parseFloat(brightnessSlider.value)
+
+            var imgd = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            var data = imgd.data
+            for (var i = 0; i < data.length; i += 4) {
+                data[i + 0] = contrast * (data[i + 0] - 128) + 128 + brightness;
+                data[i + 1] = contrast * (data[i + 1] - 128) + 128 + brightness;
+                data[i + 2] = contrast * (data[i + 2] - 128) + 128 + brightness;
+            }
+            ctx.putImageData(imgd, 0, 0);
+
+
+
+            refreshDithered()
+        }
+
+        function resize(img, width, height) {
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+
+            canvas.height = height;
+            canvas.width = width;
+
+            ctx.drawImage(img, 0, 0, width, height);
+
+            return ctx.getImageData(0, 0, width, height);
         }
 
         function getBlueprint() {
@@ -323,23 +353,44 @@
     <input type='file' id='imgfile' onchange='loadImage()' />
     <br><br>
 
-    <textarea id="blueprint"></textarea>
+    <input type="range" list="brighnessTickmarks" id="brightnessSlider" min=-255 max=255 val=0
+        onchange='refreshPreview()'>
+    <label for="brightnessSlider">Brightness</label>
+
+    <datalist id="brighnessTickmarks">
+        <option value=-255 label="-255">
+        <option value=0 label="0">
+        <option value=255 label="+255">
+    </datalist>
+
+    <input type="range" list="contrastTickmarks" id="contrastSlider" min=0 max=2 val=1 step='any'
+        onchange='refreshPreview()'>
+    <label for="contrastSlider">Contrast</label>
+
+    <datalist id="contrastTickmarks">
+        <option value=0 label="0">
+        <option value=1 label="1">
+        <option value=2 label="2">
+    </datalist>
+    <br><br>
+
+    <textarea readonly id="blueprint" spellcheck="false"></textarea>
     <button type="copyButton" onclick="copyBlueprint()">Copy</button>
     <button type="blueprintButton" onclick="getBlueprint()">Get blueprint</button>
     <br><br>
 
     <label for="hinput">Max height</label>
-    <input type="number" id='hinput' min=1 max=1000 value=25 onchange='loadImage()'>
+    <input type="number" id='hinput' min=1 max=1000 value=25 onchange='refreshDithered()'>
 
     <label for="winput">Max width</label>
-    <input type="number" id='winput' min=1 max=1000 value=25 onchange='loadImage()'>
+    <input type="number" id='winput' min=1 max=1000 value=50 onchange='refreshDithered()'>
     <br><br>
 
     <label for="direction">Printer direction</label><br>
-    <input type="radio" name="direction" value="n" onchange='loadImage()'> North
-    <input type="radio" name="direction" value="e" onchange='loadImage()' checked=true> East
-    <input type="radio" name="direction" value="w" onchange='loadImage()'> West
-    <input type="radio" name="direction" value="s" onchange='loadImage()'> South
+    <input type="radio" name="direction" value="n" onchange='refreshDithered()'> North
+    <input type="radio" name="direction" value="e" onchange='refreshDithered()' checked=true> East
+    <input type="radio" name="direction" value="w" onchange='refreshDithered()'> West
+    <input type="radio" name="direction" value="s" onchange='refreshDithered()'> South
     <br><br>
 
     <button onclick="checkAll()">Check all</button>
