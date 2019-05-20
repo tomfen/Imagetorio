@@ -35,7 +35,6 @@
             color: white;
             min-width: 2cm;
             min-height: 1cm;
-            max-width: 5cm;
             margin: 5px;
             padding: 2px;
             overflow: hidden;
@@ -301,6 +300,15 @@
             }
         }
 
+        function copyBlueprint() {
+            var bp = document.getElementById('blueprint');
+
+            bp.focus();
+            bp.select();
+
+            document.execCommand('copy')
+        }
+
 
     </script>
 </head>
@@ -315,7 +323,8 @@
     <input type='file' id='imgfile' onchange='loadImage()' />
     <br><br>
 
-    <div id="blueprint"></div>
+    <textarea id="blueprint"></textarea>
+    <button type="copyButton" onclick="copyBlueprint()">Copy</button>
     <button type="blueprintButton" onclick="getBlueprint()">Get blueprint</button>
     <br><br>
 
