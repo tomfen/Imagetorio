@@ -164,16 +164,10 @@
             var contrastSlider = document.getElementById("contrastSlider")
             var brightnessSlider = document.getElementById("brightnessSlider")
 
-            var contrast = parseFloat(contrastSlider.value)
-            var brightness = parseFloat(brightnessSlider.value)
-
             var imgd = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            var data = imgd.data
-            for (var i = 0; i < data.length; i += 4) {
-                data[i + 0] = contrast * (data[i + 0] - 128) + 128 + brightness;
-                data[i + 1] = contrast * (data[i + 1] - 128) + 128 + brightness;
-                data[i + 2] = contrast * (data[i + 2] - 128) + 128 + brightness;
-            }
+            
+            adjust(imgd)
+
             ctx.putImageData(imgd, 0, 0);
 
 
@@ -181,7 +175,19 @@
             refreshDithered()
         }
 
-        function resize(img, width, height) {
+        function adjust(imgd) {
+            var contrast = parseFloat(contrastSlider.value)
+            var brightness = parseFloat(brightnessSlider.value)
+
+            var data = imgd.data
+            for (var i = 0; i < data.length; i += 4) {
+                data[i + 0] = contrast * (data[i + 0] - 128) + 128 + brightness;
+                data[i + 1] = contrast * (data[i + 1] - 128) + 128 + brightness;
+                data[i + 2] = contrast * (data[i + 2] - 128) + 128 + brightness;
+            }
+        }
+
+        function resize(imgd, width, height) {
             var canvas = document.createElement('canvas');
             var ctx = canvas.getContext('2d');
 
@@ -190,7 +196,11 @@
 
             ctx.drawImage(img, 0, 0, width, height);
 
-            return ctx.getImageData(0, 0, width, height);
+            var imgd = ctx.getImageData(0, 0, width, height);
+            
+            adjust(imgd)
+
+            return imgd
         }
 
         function getBlueprint() {
