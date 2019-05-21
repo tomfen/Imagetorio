@@ -29,6 +29,10 @@
             font-weight: bold;
         }
 
+        .slider {
+            width: 250px;
+        }
+
         #blueprint {
             border: 2px solid rgb(235, 235, 235);
             background-image: url("b.svg");
@@ -165,7 +169,7 @@
             var brightnessSlider = document.getElementById("brightnessSlider")
 
             var imgd = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            
+
             adjust(imgd)
 
             ctx.putImageData(imgd, 0, 0);
@@ -187,7 +191,7 @@
             }
         }
 
-        function resize(imgd, width, height) {
+        function resize(img, width, height) {
             var canvas = document.createElement('canvas');
             var ctx = canvas.getContext('2d');
 
@@ -197,7 +201,7 @@
             ctx.drawImage(img, 0, 0, width, height);
 
             var imgd = ctx.getImageData(0, 0, width, height);
-            
+
             adjust(imgd)
 
             return imgd
@@ -294,7 +298,7 @@
             for (var i = 0; i < checkboxes.length; i++) {
                 checkboxes[i].checked = true
             }
-            loadImage()
+            refreshDithered()
         }
 
         function uncheckAll() {
@@ -363,22 +367,24 @@
     <input type='file' id='imgfile' onchange='loadImage()' />
     <br><br>
 
-    <input type="range" list="brighnessTickmarks" id="brightnessSlider" min=-255 max=255 val=0
+    <input type="range" class="slider" list="brighnessTickmarks" id="brightnessSlider" min=-255 max=255 val=0
         onchange='refreshPreview()'>
     <label for="brightnessSlider">Brightness</label>
 
     <datalist id="brighnessTickmarks">
         <option value=-255 label="-255">
+        <option value=-27 label="N">
         <option value=0 label="0">
         <option value=255 label="+255">
     </datalist>
 
-    <input type="range" list="contrastTickmarks" id="contrastSlider" min=0 max=2 val=1 step='any'
+    <input type="range" class="slider" list="contrastTickmarks" id="contrastSlider" min=0 max=2 val=1 step='any'
         onchange='refreshPreview()'>
     <label for="contrastSlider">Contrast</label>
 
     <datalist id="contrastTickmarks">
         <option value=0 label="0">
+        <option value=0.62 label="N">
         <option value=1 label="1">
         <option value=2 label="2">
     </datalist>
