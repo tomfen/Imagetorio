@@ -1,10 +1,14 @@
 function dither(pix, width, height, palette) {
     var indexes = []
 
+    var currRowError = new Array((width + 1) * 4).fill(0);
     var nextRowError = new Array((width + 1) * 4).fill(0);
     var nextPixError = new Array(3).fill(0);
 
     for (var y = 0; y < height; y += 1) {
+        currRowError = nextRowError
+        nextRowError = new Array((width + 1) * 4).fill(0);
+
         for (var x = 0; x < width; x += 1) {
 
             var r, g, b;
@@ -32,8 +36,11 @@ function dither(pix, width, height, palette) {
             setPix(pix, y, x, width, rc, gc, bc);
             indexes.push(bi)
         }
-    }
 
+        [nextRowError, currRowError] = [currRowError, nextRowError]
+        nextPixError.fill(0)
+    }
+    
     return indexes
 }
 
@@ -60,16 +67,12 @@ function closest(r, g, b, palette) {
 
     var rc, gc, bc;
     var ic = 0;
-    var bestDistance = 999999;
+    var bestDistance = Infinity;
 
     for (var i = 0; i < palette.length; i += 1) {
 
         var [rp, gp, bp] = palette[i];
-        var rd = rp - r;
-        var gd = gp - g;
-        var bd = bp - b;
-
-        var distance = rd * rd + gd * gd + bd * bd;
+        var distance = colorDistance(r, g, b, rp, gp, bp)
 
         if (distance < bestDistance) {
             ic = i;
@@ -87,4 +90,12 @@ function propagateError(arr, index, re, ge, be, fraction) {
     arr[index + 0] = re * fraction;
     arr[index + 1] = ge * fraction;
     arr[index + 2] = be * fraction;
+}
+
+function colorDistance(r1, g1, b1, r2, g2, b2) {
+    var rd = r1 - r2;
+    var gd = g1 - g2;
+    var bd = b1 - b2;
+
+    return rd * rd + gd * gd + bd * bd
 }

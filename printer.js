@@ -11,8 +11,6 @@ function makePrinter(idx, width, direction, items) {
 
     idx = reshape(idx, width);
 
-    console.log('idx shape: ' + idx.length + 'x' + idx[0].length);
-
     var stripes = getStripes(idx, direction);
 
     var counter = {
@@ -216,8 +214,9 @@ function getStripes(idx, direction) {
 }
 
 function reshape(arr, newWidth) {
+    var copy = [...arr]
     var newArr = [];
-    while (arr.length) newArr.push(arr.splice(0, newWidth));
+    while (copy.length) newArr.push(copy.splice(0, newWidth));
 
     return newArr;
 }

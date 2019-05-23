@@ -1,0 +1,99 @@
+body {
+    font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0px;
+}
+
+div.headerBar {
+    border-bottom: 1px solid rgb(77, 77, 77);
+    background-color: rgb(37, 37, 37);
+    padding-left: 20px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+div.headerBar h1 {
+    color: white;
+    font-weight: bold;
+    margin: 0;
+}
+
+div.content {
+    padding: 10px;
+}
+
+div.previewBox {
+    float: left;
+}
+
+.blueprintBox {
+    border: 2px solid rgb(235, 235, 235);
+    background-image: url("b.svg");
+    background-color: rgb(95, 95, 146);
+    color: white;
+    margin: 5px;
+    padding: 3px;
+    float: left;
+}
+
+.blueprintButton {
+    position: relative;
+    vertical-align: top;
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    font-size: 22px;
+    color: white;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    border: dashed 1px white;
+    background: rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+#blueprint {
+    padding: 0px;
+    overflow: hidden;
+    background: transparent;
+    height: 100px;
+    margin: 0px;
+    border: dashed 1px white;
+    color: white;
+    vertical-align: top;
+}
+
+.blueprintButton:active {
+    top: 1px;
+    outline: none;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+
+
+.itemCheckboxGroup {
+    width: 250px;
+    display: inline-block;
+    padding: 0px 5px
+}
+
+.preview {
+    border: 1px solid rgb(97, 97, 97);
+}
+
+.settingsBox{
+    display: inline-block;
+}
+
+.colorBox {
+    width: 15px;
+    height: 15px;
+    float: left
+}
+
+.countBox {
+    float: right;
+    font-weight: bold;
+}
+
+.slider {
+    width: 250px;
+}

@@ -3,48 +3,7 @@
 <head>
     <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
     <title>Imagetorio</title>
-    <style type='text/css'>
-        body {
-            font-family: sans-serif;
-        }
-
-        .itemCheckboxGroup {
-            width: 250px;
-            display: inline-block;
-            padding: 0px 5px
-        }
-
-        .preview {
-            border: 1px solid rgb(97, 97, 97);
-        }
-
-        .colorBox {
-            width: 15px;
-            height: 15px;
-            float: left
-        }
-
-        .countBox {
-            float: right;
-            font-weight: bold;
-        }
-
-        .slider {
-            width: 250px;
-        }
-
-        #blueprint {
-            border: 2px solid rgb(235, 235, 235);
-            background-image: url("b.svg");
-            background-color: rgb(95, 95, 146);
-            color: white;
-            min-width: 2cm;
-            min-height: 1cm;
-            margin: 5px;
-            padding: 2px;
-            overflow: hidden;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css"> 
 
     <script type="text/javascript" src="printer.js"></script>
     <script type="text/javascript" src="colors.js"></script>
@@ -345,6 +304,7 @@
         }
 
         function copyBlueprint() {
+            getBlueprint()
             var bp = document.getElementById('blueprint');
 
             bp.focus();
@@ -358,62 +318,71 @@
 </head>
 
 <body onload="init()">
-    <h1>Imagetorio</h1>
+    <div class='headerBar'>
+        <h1>Imagetorio</h1>
+    </div>
 
-    <canvas id="canvas1" class="preview"></canvas>
-    <canvas id="canvas2" class="preview"></canvas>
-    <br><br>
+    <div class='content'>
+        <div class="previewBox">
 
-    <input type='file' id='imgfile' onchange='loadImage()' />
-    <br><br>
+            <canvas id="canvas1" class="preview"></canvas>
+            <canvas id="canvas2" class="preview"></canvas>
+            <br><br>
 
-    <input type="range" class="slider" list="brighnessTickmarks" id="brightnessSlider" min=-255 max=255 val=0
-        onchange='refreshPreview()'>
-    <label for="brightnessSlider">Brightness</label>
+            <input type='file' id='imgfile' onchange='loadImage()' />
+            <br><br>
 
-    <datalist id="brighnessTickmarks">
-        <option value=-255 label="-255">
-        <option value=-27 label="N">
-        <option value=0 label="0">
-        <option value=255 label="+255">
-    </datalist>
+            <input type="range" class="slider" list="brighnessTickmarks" id="brightnessSlider" min=-255 max=255 val=0
+                onchange='refreshPreview()'>
+            <label for="brightnessSlider">Brightness</label>
 
-    <input type="range" class="slider" list="contrastTickmarks" id="contrastSlider" min=0 max=2 val=1 step='any'
-        onchange='refreshPreview()'>
-    <label for="contrastSlider">Contrast</label>
+            <datalist id="brighnessTickmarks">
+                <option value=-255 label="-255">
+                <option value=-27 label="N">
+                <option value=0 label="0">
+                <option value=255 label="+255">
+            </datalist>
 
-    <datalist id="contrastTickmarks">
-        <option value=0 label="0">
-        <option value=0.62 label="N">
-        <option value=1 label="1">
-        <option value=2 label="2">
-    </datalist>
-    <br><br>
+            <input type="range" class="slider" list="contrastTickmarks" id="contrastSlider" min=0 max=2 val=1 step='any'
+                onchange='refreshPreview()'>
+            <label for="contrastSlider">Contrast</label>
 
-    <textarea readonly id="blueprint" spellcheck="false"></textarea>
-    <button type="copyButton" onclick="copyBlueprint()">Copy</button>
-    <button type="blueprintButton" onclick="getBlueprint()">Get blueprint</button>
-    <br><br>
+            <datalist id="contrastTickmarks">
+                <option value=0 label="0">
+                <option value=0.62 label="N">
+                <option value=1 label="1">
+                <option value=2 label="2">
+            </datalist>
+        </div>
 
-    <label for="hinput">Max height</label>
-    <input type="number" id='hinput' min=1 max=1000 value=25 onchange='refreshDithered()'>
+        <div class="blueprintBox">
+            <textarea readonly id="blueprint" spellcheck="false"></textarea>
+            <button type="copyButton" onclick="copyBlueprint()" class='blueprintButton'>Get</button>
+        </div>
 
-    <label for="winput">Max width</label>
-    <input type="number" id='winput' min=1 max=1000 value=50 onchange='refreshDithered()'>
-    <br><br>
+        <div class='settingsBox'>
+            <br><br>
 
-    <label for="direction">Printer direction</label><br>
-    <input type="radio" name="direction" value="n" onchange='refreshDithered()'> North
-    <input type="radio" name="direction" value="e" onchange='refreshDithered()' checked=true> East
-    <input type="radio" name="direction" value="w" onchange='refreshDithered()'> West
-    <input type="radio" name="direction" value="s" onchange='refreshDithered()'> South
-    <br><br>
+            <label for="hinput">Max height</label>
+            <input type="number" id='hinput' min=1 max=1000 value=25 onchange='refreshDithered()'>
 
-    <button onclick="checkAll()">Check all</button>
-    <button onclick="uncheckAll()">Uncheck all</button>
-    <br><br>
+            <label for="winput">Max width</label>
+            <input type="number" id='winput' min=1 max=1000 value=50 onchange='refreshDithered()'>
+            <br><br>
 
-    <form action='#' onsubmit="return false;" id='availableItems'>
-    </form>
+            <label for="direction">Printer direction</label><br>
+            <input type="radio" name="direction" value="n" onchange='refreshDithered()'> North
+            <input type="radio" name="direction" value="e" onchange='refreshDithered()' checked=true> East
+            <input type="radio" name="direction" value="w" onchange='refreshDithered()'> West
+            <input type="radio" name="direction" value="s" onchange='refreshDithered()'> South
+            <br><br>
 
+            <button onclick="checkAll()">Check all</button>
+            <button onclick="uncheckAll()">Uncheck all</button>
+            <br><br>
+
+            <form action='#' onsubmit="return false;" id='availableItems'>
+            </form>
+        </div>
+    </div>
 </body>
