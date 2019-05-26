@@ -9,13 +9,29 @@ div.headerBar {
     padding-left: 20px;
     padding-top: 5px;
     padding-bottom: 5px;
+    color: white;
 }
 
 div.headerBar h1 {
-    color: white;
     font-weight: bold;
     margin: 0;
+    margin-right: 30px;
+    display:inline-block;
 }
+
+div.headerBar a {
+    font-weight: bold;
+    margin: 0;
+    margin-right: 10px;
+    display:inline-block;
+    text-decoration: none;
+}
+
+div.headerBar a:link {
+    color: green; 
+    background-color: transparent; 
+    text-decoration: none;
+  }
 
 div.content {
     padding: 10px;
@@ -44,7 +60,6 @@ div.previewBox {
     font-size: 22px;
     color: white;
     text-align: center;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
     border: dashed 1px white;
     background: rgba(0, 0, 0, 0.1);
     cursor: pointer;
@@ -77,6 +92,7 @@ div.previewBox {
 
 .preview {
     border: 1px solid rgb(97, 97, 97);
+    background: rgb(236, 236, 236)
 }
 
 .settingsBox{
@@ -97,3 +113,44 @@ div.previewBox {
 .slider {
     width: 250px;
 }
+
+#snackbar {
+    visibility: hidden; 
+    min-width: 250px; 
+    margin-left: -125px; 
+    background-color: rgb(77, 77, 77); 
+    color: white; 
+    text-align: center; 
+    border-radius: 3px; 
+    padding: 8px; 
+    position: fixed; 
+    z-index: 1; 
+    left: 50%; 
+    bottom: 30px; 
+  }
+  
+  #snackbar.show {
+    visibility: visible;
+    -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  }
+  
+  @-webkit-keyframes fadein {
+    from {bottom: 0; opacity: 0;} 
+    to {bottom: 30px; opacity: 1;}
+  }
+  
+  @keyframes fadein {
+    from {bottom: 0; opacity: 0;}
+    to {bottom: 30px; opacity: 1;}
+  }
+  
+  @-webkit-keyframes fadeout {
+    from {bottom: 30px; opacity: 1;} 
+    to {bottom: 0; opacity: 0;}
+  }
+  
+  @keyframes fadeout {
+    from {bottom: 30px; opacity: 1;}
+    to {bottom: 0; opacity: 0;}
+  }

@@ -1,4 +1,34 @@
-function dither(pix, width, height, palette) {
+function dither(pix, width, height, palette, method) {
+    if (method == 'fs')
+        return floydSteiberg(pix, width, height, palette);
+    else if (method == 'closest')
+        return quantize(pix, palette);
+}
+
+function quantize(pix, palette) {
+    var indexes = []
+
+    for (var i = 0; i < pix.length; i += 4) {
+        var r, g, b;
+        var rc, gc, bc;
+
+        r = pix[i];
+        g = pix[i + 1];
+        b = pix[i + 2];
+
+        [rc, gc, bc, bi] = closest(r, g, b, palette);
+
+        pix[i + 0] = rc
+        pix[i + 1] = gc
+        pix[i + 2] = bc
+
+        indexes.push(bi)
+    }
+
+    return indexes
+}
+
+function floydSteiberg(pix, width, height, palette) {
     var indexes = []
 
     var currRowError = new Array((width + 1) * 4).fill(0);
@@ -40,7 +70,7 @@ function dither(pix, width, height, palette) {
         [nextRowError, currRowError] = [currRowError, nextRowError]
         nextPixError.fill(0)
     }
-    
+
     return indexes
 }
 
@@ -93,9 +123,10 @@ function propagateError(arr, index, re, ge, be, fraction) {
 }
 
 function colorDistance(r1, g1, b1, r2, g2, b2) {
-    var rd = r1 - r2;
-    var gd = g1 - g2;
-    var bd = b1 - b2;
+    var rd, gd, bd;
+    rd = r1 - r2;
+    gd = g1 - g2;
+    bd = b1 - b2;
 
-    return rd * rd + gd * gd + bd * bd
+    return rd * rd + gd * gd + bd * bd;
 }

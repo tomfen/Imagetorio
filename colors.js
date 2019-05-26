@@ -132,5 +132,10 @@ var colors = {
     'water-barrel': [96, 103, 101],
     'wood': [114, 72, 51],
     'wooden-chest': [118, 92, 56],
-
+    'blueprint-book': [65., 106., 134.],
+    'blueprint': [37., 115., 163.],
+    'deconstruction-planner': [169., 55., 57.],
+    'raw-fish': [134., 100., 75.],
+    'upgrade-planner': [130., 148., 2.],
+    
 }

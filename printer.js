@@ -9,9 +9,9 @@ function makePrinter(idx, width, direction, items) {
         }
     }
 
-    idx = reshape(idx, width);
+    var idxMatrix = reshape(idx, width);
 
-    var stripes = getStripes(idx, direction);
+    var stripes = getStripes(idxMatrix, direction);
 
     var counter = {
         i: -1,
@@ -31,7 +31,7 @@ function makePrinter(idx, width, direction, items) {
         put_splitter(blueprint, counter, x, 0)
         var [multiplier, divider, bit_shifter] =
             put_decoder(blueprint, counter, x, 7)
-        put_memory(blueprint, counter, x, 31, divider, bit_shifter, stripe, items)
+        put_memory(blueprint, counter, x, 32, divider, bit_shifter, stripe, items)
 
         connect('red', multiplier, multiplierHook, 1, 1)
         multiplierHook = multiplier
@@ -286,12 +286,12 @@ function connect(wire, first, second, first_circuit = 1, second_circuit = 1) {
 
 function put_decoder(blueprint, counter, x, y) {
     blueprint['blueprint']['entities'].push({ 'entity_number': counter.next(), 'name': 'express-underground-belt', 'position': { 'x': x, 'y': y }, 'type': 'output' })
-    blueprint['blueprint']['entities'].push({ 'entity_number': counter.next(), 'name': 'express-underground-belt', 'position': { 'x': x, 'y': y + 9 }, 'type': 'input' })
+    blueprint['blueprint']['entities'].push({ 'entity_number': counter.next(), 'name': 'express-underground-belt', 'position': { 'x': x, 'y': y + 8 }, 'type': 'input' })
 
     requester = {
         'entity_number': counter.next(),
         'name': 'logistic-chest-requester',
-        'position': { 'x': x, 'y': y + 11 },
+        'position': { 'x': x, 'y': y + 10 },
         'control_behavior': { 'circuit_mode_of_operation': 1 }
     }
 
@@ -313,7 +313,7 @@ function put_decoder(blueprint, counter, x, y) {
     inserter = {
         'entity_number': counter.next(),
         'name': 'stack-filter-inserter',
-        'position': { 'x': x, 'y': y + 10 },
+        'position': { 'x': x, 'y': y + 9 },
         'direction': Direction.S,
         'control_behavior': {
             'circuit_mode_of_operation': 1,
@@ -322,10 +322,28 @@ function put_decoder(blueprint, counter, x, y) {
         'override_stack_size': 1
     }
 
+    cleaner = {
+        'entity_number': counter.next(),
+        'name': 'stack-filter-inserter',
+        'position': { 'x': x, 'y': y + 11 },
+        'direction': Direction.N,
+        'control_behavior': {
+            'circuit_mode_of_operation': 1,
+        },
+        "filter_mode":"blacklist",
+        'override_stack_size': 1
+    }
+    
+    trash = {
+        'entity_number': counter.next(),
+        'name': 'logistic-chest-passive-provider',
+        'position': { 'x': x, 'y': y + 12 },
+    }
+
     pulse_conv = {
         'entity_number': counter.next(),
         'name': 'decider-combinator',
-        'position': { 'x': x, 'y': y + 13.5 },
+        'position': { 'x': x, 'y': y + 14.5 },
         'direction': Direction.S,
         'control_behavior': {
             'decider_conditions': {
@@ -340,7 +358,7 @@ function put_decoder(blueprint, counter, x, y) {
     bit_shifter = {
         'entity_number': counter.next(),
         'name': 'arithmetic-combinator',
-        'position': { 'x': x, 'y': y + 19.5 },
+        'position': { 'x': x, 'y': y + 20.5 },
         'direction': Direction.N,
         'control_behavior': {
             'arithmetic_conditions': {
@@ -355,7 +373,7 @@ function put_decoder(blueprint, counter, x, y) {
     bit_and = {
         'entity_number': counter.next(),
         'name': 'arithmetic-combinator',
-        'position': { 'x': x, 'y': y + 17.5 },
+        'position': { 'x': x, 'y': y + 18.5 },
         'direction': Direction.N,
         'control_behavior': {
             'arithmetic_conditions': {
@@ -370,7 +388,7 @@ function put_decoder(blueprint, counter, x, y) {
     it_counter = {
         'entity_number': counter.next(),
         'name': 'arithmetic-combinator',
-        'position': { 'x': x, 'y': y + 15.5 },
+        'position': { 'x': x, 'y': y + 16.5 },
         'direction': Direction.S,
         'control_behavior': {
             'arithmetic_conditions': {
@@ -385,7 +403,7 @@ function put_decoder(blueprint, counter, x, y) {
     divider = {
         'entity_number': counter.next(),
         'name': 'arithmetic-combinator',
-        'position': { 'x': x, 'y': y + 22.5 },
+        'position': { 'x': x, 'y': y + 23.5 },
         'direction': Direction.S,
         'control_behavior': {
             'arithmetic_conditions': {
@@ -399,6 +417,7 @@ function put_decoder(blueprint, counter, x, y) {
 
     connect('green', multiplier, requester, first_circuit = 2)
     connect('green', inserter, multiplier, second_circuit = 1)
+    connect('green', inserter, cleaner)
     connect('red', pulse_conv, inserter, first_circuit = 1)
     connect('red', bit_shifter, it_counter, first_circuit = 1, second_circuit = 2)
     connect('red', bit_shifter, divider, first_circuit = 1, second_circuit = 1)
@@ -407,14 +426,14 @@ function put_decoder(blueprint, counter, x, y) {
     connect('green', it_counter, it_counter, first_circuit = 1, second_circuit = 2)
     connect('red', it_counter, pulse_conv, first_circuit = 1, second_circuit = 2)
 
-    entities = [requester, multiplier, inserter, pulse_conv, bit_shifter, bit_and, it_counter, divider]
+    entities = [requester, multiplier, inserter, cleaner, trash, pulse_conv, bit_shifter, bit_and, it_counter, divider]
 
     entities.forEach(entity => {
         blueprint['blueprint']['entities'].push(entity)
     });
 
     if (x % 7 == 0) {
-        [y + 7, y + 12, y + 21].forEach(_y => {
+        [y + 7, y + 13, y + 22].forEach(_y => {
             pole = {
                 "entity_number": counter.next(),
                 "name": "medium-electric-pole",
@@ -559,12 +578,13 @@ function put_memory(blueprint, counter, x, entity_y, divider, bit_shifter, id_li
                 "name": "constant-combinator",
                 "position": { "x": x, "y": entity_y + 3 }
             }
+            entity_y+=1
 
             blueprint["blueprint"]["entities"].push(constant_combinator2)
         }
 
 
-        if (x % 7 == 0) {
+        if ((x+strip_number*3) % 7 == 0) {
             pole = {
                 "entity_number": counter.next(),
                 "name": "medium-electric-pole",
@@ -572,8 +592,9 @@ function put_memory(blueprint, counter, x, entity_y, divider, bit_shifter, id_li
             }
 
             blueprint["blueprint"]["entities"].push(pole)
+            entity_y+=1
         }
 
-        entity_y += 4
+        entity_y += 3
     }
 }
