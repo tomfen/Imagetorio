@@ -38,6 +38,7 @@ jobs:
       - name: Build
         run: |
           cd Imagetorio
+          bun install
           bun run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
