@@ -93,7 +93,7 @@
   </v-snackbar>
 </template>
 
-<script lang="ts">
+<script>
 import BlueprintBox from "@/components/BlueprintBox.vue";
 import DirectionRadio from "@/components/DirectionRadio.vue";
 import ItemSelect from "@/components/ItemSelect.vue";
@@ -1032,7 +1032,7 @@ export default {
         var decider_connections;
         if (strip_number == 0) {
           decider_connections = {
-            "1": {
+            1: {
               red: [
                 {
                   entity_id: divider["entity_number"],
@@ -1040,7 +1040,7 @@ export default {
                 },
               ],
             },
-            "2": {
+            2: {
               green: [
                 {
                   entity_id: bit_shifter["entity_number"],
@@ -1051,7 +1051,7 @@ export default {
           };
         } else {
           decider_connections = {
-            "1": {
+            1: {
               red: [
                 {
                   entity_id: decider_combinator["entity_number"],
@@ -1059,7 +1059,7 @@ export default {
                 },
               ],
             },
-            "2": {
+            2: {
               green: [
                 {
                   entity_id: decider_combinator["entity_number"],
@@ -1088,7 +1088,7 @@ export default {
 
         var constant_combinator1 = {
           connections: {
-            "1": {
+            1: {
               green: [
                 {
                   entity_id: counter.last(),
@@ -1109,7 +1109,7 @@ export default {
         if (filters.length > 18) {
           let constant_combinator2 = {
             connections: {
-              "1": {
+              1: {
                 green: [
                   {
                     entity_id: counter.last(),
