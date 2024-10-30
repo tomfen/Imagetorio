@@ -85,8 +85,6 @@
         }
       "
     />
-
-    <SnackBar />
   </v-container>
   <v-snackbar timeout="2000" v-model="snackbar">
     Copied to clipboard
@@ -97,7 +95,6 @@
 import BlueprintBox from "@/components/BlueprintBox.vue";
 import DirectionRadio from "@/components/DirectionRadio.vue";
 import ItemSelect from "@/components/ItemSelect.vue";
-import SnackBar from "@/components/SnackBar.vue";
 
 import pako from "pako";
 
@@ -131,6 +128,7 @@ export default {
       itemCount: {},
 
       snackbar: false,
+      widthTemp: null,
     };
   },
   watch: {
@@ -159,7 +157,6 @@ export default {
   components: {
     DirectionRadio,
     ItemSelect,
-    SnackBar,
     BlueprintBox,
   },
   methods: {
@@ -1212,6 +1209,8 @@ export default {
 
       var method = this.ditherChecked ? "fs" : "closest";
 
+      this.widthTemp = w;
+
       console.time("Dither");
       idx = this.dither(
         pix,
@@ -1257,7 +1256,7 @@ export default {
     getBlueprint() {
       this.blueprintString = this.makePrinter(
         idx,
-        100,
+        this.widthTemp, // TODO:FIXME
         this.direction,
         this.getNames()
       );

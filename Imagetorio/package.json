@@ -10,6 +10,7 @@
   "dependencies": {
     "@mdi/font": "7.4.47",
     "core-js": "^3.37.1",
+    "gifuct-js": "^2.1.2",
     "pako": "^1.0.10",
     "roboto-fontface": "*",
     "vue": "^3.4.31",

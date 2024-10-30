@@ -1,7 +1,8 @@
 // Composables
+import Decode from "@/components/Decode.vue";
 import Lamps from "@/components/Lamps.vue";
 import Printer from "@/components/Printer.vue";
-import { createRouter, createWebHistory } from "vue-router/auto";
+import { createRouter, createWebHashHistory } from "vue-router/auto";
 
 const routes = [
   {
@@ -19,12 +20,17 @@ const routes = [
         name: "lamps",
         component: Lamps,
       },
+      {
+        path: "decode",
+        name: "decode",
+        component: Decode,
+      },
     ],
   },
 ];
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes,
 });
 

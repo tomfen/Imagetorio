@@ -6,6 +6,8 @@
       <v-btn variant="plain" to="/printer">Printer</v-btn>
       <v-icon>mdi-circle-small </v-icon>
       <v-btn variant="plain" to="/lamps">Lamps</v-btn>
+      <v-icon>mdi-circle-small </v-icon>
+      <v-btn variant="plain" to="/decode">Decode</v-btn>
       <v-spacer></v-spacer>
       <v-spacer></v-spacer>
     </v-app-bar>
